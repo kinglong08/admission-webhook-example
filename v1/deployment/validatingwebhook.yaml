@@ -1,22 +1,23 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: validation-webhook-example-cfg
+  name: validation-webhook-storage-cfg
   labels:
-    app: admission-webhook-example
+    app: admission-webhook-storage
 webhooks:
-  - name: required-labels.qikqiak.com
+  - name: quota-storage.sugon.com
     clientConfig:
       service:
-        name: admission-webhook-example-svc
+        name: admission-webhook-storage-svc
         namespace: default
         path: "/validate"
       caBundle: ${CA_BUNDLE}
     rules:
-      - operations: [ "CREATE" ]
+      - operations: [ "CREATE", "DELETE"]
         apiGroups: ["apps", ""]
         apiVersions: ["v1"]
-        resources: ["deployments","services"]
-    namespaceSelector:
-      matchLabels:
-        admission-webhook-example: enabled
+        resources: ["persistentvolumeclaims"]
+
+#    namespaceSelector:
+#      matchLabels:
+#        admission-webhook-example: enabled

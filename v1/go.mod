@@ -4,8 +4,12 @@ go 1.13
 
 require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	k8s.io/api v0.16.10
-	k8s.io/apimachinery v0.16.10
+	github.com/robfig/cron/v3 v3.0.1
+	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
+	k8s.io/api v0.20.10
+	k8s.io/apiextensions-apiserver v0.0.0
+	k8s.io/apimachinery v0.23.5
+	k8s.io/client-go v0.16.10
 	k8s.io/kubernetes v1.16.10
 )
 

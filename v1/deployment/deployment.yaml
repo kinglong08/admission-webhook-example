@@ -1,23 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: admission-webhook-example-deployment
+  name: admission-webhook-storage-deployment
   labels:
-    app: admission-webhook-example
+    app: admission-webhook-storage
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: admission-webhook-example
+      app: admission-webhook-storage
   template:
     metadata:
       labels:
-        app: admission-webhook-example
+        app: admission-webhook-storage
     spec:
-      serviceAccount: admission-webhook-example-sa
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      serviceAccount: admission-webhook-storage-sa
       containers:
-        - name: admission-webhook-example
-          image: kimoqi/admission-webhook-example:v1
+        - name: admission-webhook-storage
+          image: kubeoperator/admission-webhook/admission-webhook-storage:v1
           imagePullPolicy: Always
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -29,7 +31,12 @@ spec:
             - name: webhook-certs
               mountPath: /etc/webhook/certs
               readOnly: true
+            - name: kube-config
+              mountPath: /root/.kube/config
       volumes:
         - name: webhook-certs
           secret:
-            secretName: admission-webhook-example-certs
+            secretName: admission-webhook-storage-certs
+        - name: kube-config
+          hostPath:
+            path: /root/.kube/config

@@ -1,13 +1,14 @@
 #!/bin/bash
 
-: ${DOCKER_USER:? required}
+#: ${DOCKER_USER:? required}
 
 export GO111MODULE=on 
 export GOPROXY=https://goproxy.cn
 # build webhook
-CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o admission-webhook-example 
+CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o admission-webhook-storage
 # build docker image
-docker build --no-cache -t ${DOCKER_USER}/admission-webhook-example:v1 .
-rm -rf admission-webhook-example
+docker build --no-cache -t 10.6.8.126:8083/kubeoperator/admission-webhook/admission-webhook-storage:v1 .
+rm -rf admission-webhook-storage
 
-docker push ${DOCKER_USER}/admission-webhook-example:v1
+#docker push ${DOCKER_USER}/admission-webhook-storage:v1
+docker push 10.6.8.126:8083/kubeoperator/admission-webhook/admission-webhook-storage:v1

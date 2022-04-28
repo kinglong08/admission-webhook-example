@@ -1,20 +1,20 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: admission-webhook-example-sa
-  labels:
-    app: admission-webhook-example
+  name: admission-webhook-storage-sa
+#  labels:
+#    app: admission-webhook-storage
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: admission-webhook-example-cr
+  name: admission-webhook-storage-cr
   labels:
-    app: admission-webhook-example
+    app: admission-webhook-storage
 rules:
 - apiGroups:
-  - qikqiak.com
+  - sugon.com
   resources:
   - "*"
   verbs:
@@ -33,6 +33,10 @@ rules:
   - daemonsets
   - replicasets
   - statefulsets
+  - pvc
+  - persistentVolumeClaim
+  - persistentvolumes
+  - persistentvolumeclaims
   verbs:
   - "*"
 - apiGroups:
@@ -46,14 +50,14 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: admission-webhook-example-crb 
+  name: admission-webhook-storage-crb
   labels:
-    app: admission-webhook-example
+    app: admission-webhook-storage
 subjects:
 - kind: ServiceAccount
-  name: admission-webhook-example-sa
+  name: admission-webhook-storage-sa
   namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: admission-webhook-example-cr
+  name: admission-webhook-storage-cr

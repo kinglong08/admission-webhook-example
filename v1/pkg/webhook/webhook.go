@@ -178,23 +178,33 @@ func (whsvr *Server) validate(ar *v1beta1.AdmissionReview, log *bytes.Buffer) *v
 						}
 					}
 				} else if action == "DELETE" {
-					if annotations["storageVersion"] == strconv.Itoa(storageVersion) {
-						usage := strconv.FormatInt(usageStorage-pvcStorageSize, 10) + "Bi"
-						annotations["usage"] = base64.URLEncoding.EncodeToString([]byte(usage))
-						annotations["storageVersion"] = strconv.Itoa(storageVersion + 1)
-						storageClass.SetAnnotations(annotations)
-						_, err = client.StorageV1beta1().StorageClasses().Update(&storageClass)
-						if err != nil {
-							glog.Warning("update storaClass annotation failed")
-						}
+					reclaimPolicy := storageClass.ReclaimPolicy
+					if "Retain" == string(*reclaimPolicy) {
 						glog.Info("===storage quota: ", FormatFileSize(strconv.FormatInt(quotaStorage, 10)+"Bi"))
-						glog.Info("===storage usage: ", FormatFileSize(usage))
+						glog.Info("===storage usage: ", FormatFileSize(strconv.FormatInt(usageStorage, 10)+"Bi"))
 						return &v1beta1.AdmissionResponse{
 							Allowed: allowed,
 							Result:  result,
 						}
-					} else { // 乐观锁，重试
-						whsvr.validate(ar, log)
+					} else {
+						if annotations["storageVersion"] == strconv.Itoa(storageVersion) {
+							usage := strconv.FormatInt(usageStorage-pvcStorageSize, 10) + "Bi"
+							annotations["usage"] = base64.URLEncoding.EncodeToString([]byte(usage))
+							annotations["storageVersion"] = strconv.Itoa(storageVersion + 1)
+							storageClass.SetAnnotations(annotations)
+							_, err = client.StorageV1beta1().StorageClasses().Update(&storageClass)
+							if err != nil {
+								glog.Warning("update storaClass annotation failed")
+							}
+							glog.Info("===storage quota: ", FormatFileSize(strconv.FormatInt(quotaStorage, 10)+"Bi"))
+							glog.Info("===storage usage: ", FormatFileSize(usage))
+							return &v1beta1.AdmissionResponse{
+								Allowed: allowed,
+								Result:  result,
+							}
+						} else { // 乐观锁，重试
+							whsvr.validate(ar, log)
+						}
 					}
 				} else if action == "UPDATE" { // TODO update为何会在每次新建和删除时重复执行多次？？？
 					var expansion = false

@@ -78,7 +78,9 @@ func synchronousStorage() {
 			panic(err)
 		}
 		// 获取所有pvc
-		persistentVolumeClaims, err := client.CoreV1().PersistentVolumeClaims("").List(metav1.ListOptions{})
+		//persistentVolumes, err := client.CoreV1().PersistentVolumeClaims("").List(metav1.ListOptions{})
+		persistentVolumes, err := client.CoreV1().PersistentVolumes().List(metav1.ListOptions{})
+
 		if err != nil {
 			panic(err)
 		}
@@ -119,10 +121,10 @@ func synchronousStorage() {
 					}
 				}
 			}
-			for j := 0; j < len(persistentVolumeClaims.Items); j++ {
-				pvc := persistentVolumeClaims.Items[j]
-				pvcStorageClassName := *pvc.Spec.StorageClassName
-				pvcStorage := pvc.Spec.Resources.Requests["storage"]
+			for j := 0; j < len(persistentVolumes.Items); j++ {
+				pv := persistentVolumes.Items[j]
+				pvcStorageClassName := pv.Spec.StorageClassName
+				pvcStorage := pv.Spec.Capacity["storage"]
 				pvcStorageNum := pvcStorage.Value()
 				if storageClassName == pvcStorageClassName {
 					pvcCount = pvcCount + pvcStorageNum

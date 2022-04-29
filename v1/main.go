@@ -41,11 +41,9 @@ func main() {
 			TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
 		},
 	}
-	glog.Info("whsvr", whsvr.Server)
-	glog.Info("Addr", whsvr.Server.Addr)
 	// define http server and server handler // 注册handler
 	mux := http.NewServeMux()
-	mux.HandleFunc("/mutate", whsvr.Serve)
+	//mux.HandleFunc("/mutate", whsvr.Serve)
 	mux.HandleFunc("/validate", whsvr.Serve)
 	whsvr.Server.Handler = mux
 	// start webhook server in new routine // 启动协程来处理

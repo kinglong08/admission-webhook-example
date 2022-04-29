@@ -214,26 +214,32 @@ func (whsvr *Server) validate(ar *v1beta1.AdmissionReview, log *bytes.Buffer) *v
 							if addSize+usageStorage > quotaStorage { // 超，拒绝
 								allowed = false
 								glog.Error("===Storage capacity out of bounds")
-								glog.Info("===storage quota: ", FormatFileSize(annotations["quota"]))
-								glog.Info("===storage usage: ", FormatFileSize(annotations["usage"]))
+								glog.Info("===storage quota: ", FormatFileSize(strconv.FormatInt(quotaStorage, 10)+"Bi"))
+								glog.Info("===storage usage: ", FormatFileSize(strconv.FormatInt(usageStorage, 10)+"Bi"))
 								return &v1beta1.AdmissionResponse{
 									Allowed: allowed,
 									Result:  result,
 								}
 							} else { // 未超，准入,并修改usage值
-								annotations["usage"] = strconv.FormatInt(addSize+usageStorage, 10) + "Bi"
-								storageClass.SetAnnotations(annotations)
-								_, err = client.StorageV1beta1().StorageClasses().Update(&storageClass)
-								if err != nil {
-									glog.Warning("update storaClass annotation failed")
-								}
-								glog.Info("===storage quota: ", FormatFileSize(annotations["quota"]))
-								glog.Info("===storage usage: ", FormatFileSize(annotations["usage"]))
-								return &v1beta1.AdmissionResponse{
-									Allowed: allowed,
-									Result:  result,
+								if annotations["storageVersion"] == strconv.Itoa(storageVersion) {
+									usage := strconv.FormatInt(addSize+usageStorage, 10) + "Bi"
+									annotations["usage"] = base64.URLEncoding.EncodeToString([]byte(usage))
+									annotations["storageVersion"] = strconv.Itoa(storageVersion + 1)
+									storageClass.SetAnnotations(annotations)
+									_, err = client.StorageV1beta1().StorageClasses().Update(&storageClass)
+									if err != nil {
+										glog.Warning("update storaClass annotation failed")
+									}
+									glog.Info("===storage quota: ", FormatFileSize(annotations["quota"]))
+									glog.Info("===storage usage: ", FormatFileSize(annotations["usage"]))
+									return &v1beta1.AdmissionResponse{
+										Allowed: allowed,
+										Result:  result,
+									}
 								}
 							}
+						} else { // 乐观锁，重试
+							whsvr.validate(ar, log)
 						}
 					}
 				}
@@ -298,9 +304,7 @@ func (whsvr *Server) Serve(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		fmt.Println(r.URL.Path)
-		if r.URL.Path == "/mutate" {
-			//admissionResponse = whsvr.mutate(&ar, &log)
-		} else if r.URL.Path == "/validate" {
+		if r.URL.Path == "/validate" {
 			admissionResponse = whsvr.validate(&ar, &log)
 		}
 	}
